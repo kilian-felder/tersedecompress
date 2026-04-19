@@ -185,5 +185,81 @@ public class AppTest
         }
 		assertArrayEquals(file, expected, out.toByteArray());
 	}
-	
+
+	// -- TerseRecordDecompresser tests --
+
+	@Test public void testRecordBinaryPack01() throws Exception { testRecordBinary("FB.BIBLE.TXT",    "PACK"); }
+	@Test public void testRecordBinaryPack02() throws Exception { testRecordBinary("FB.LCET10.TXT",   "PACK"); }
+	@Test public void testRecordBinaryPack03() throws Exception { testRecordBinary("VB.BIBLE.TXT",    "PACK"); }
+	@Test public void testRecordBinaryPack04() throws Exception { testRecordBinary("VB.LCET10.TXT",   "PACK"); }
+	@Test public void testRecordBinarySPack01() throws Exception { testRecordBinary("FB.BIBLE.TXT",   "SPACK"); }
+	@Test public void testRecordBinarySPack02() throws Exception { testRecordBinary("VB.BIBLE.TXT",   "SPACK"); }
+
+	@Test public void testRecordTextPack01() throws Exception { testRecordText("FB.BIBLE.TXT",    "PACK"); }
+	@Test public void testRecordTextPack02() throws Exception { testRecordText("FB.LCET10.TXT",   "PACK"); }
+	@Test public void testRecordTextPack03() throws Exception { testRecordText("VB.BIBLE.TXT",    "PACK"); }
+	@Test public void testRecordTextPack04() throws Exception { testRecordText("VB.LCET10.TXT",   "PACK"); }
+	@Test public void testRecordTextSPack01() throws Exception { testRecordText("FB.BIBLE.TXT",   "SPACK"); }
+	@Test public void testRecordTextSPack02() throws Exception { testRecordText("VB.BIBLE.TXT",   "SPACK"); }
+
+	/**
+	 * Decompresses using TerseRecordDecompresser in binary mode and reassembles the output
+	 * (re-adding RDW headers for VB records) to compare against the reference binary output.
+	 */
+	private void testRecordBinary(String file, String packSpack) throws Exception
+	{
+		String tersed = location + "/TERSED/" + file + "." + packSpack;
+		String untersed = location + "/ZOSBINARY/" + file;
+
+		byte[] expected = Files.readAllBytes(Paths.get(untersed));
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		DataOutputStream dataOut = new DataOutputStream(out);
+
+		try (TerseRecordDecompresser rd = new TerseRecordDecompresser(new FileInputStream(tersed), false))
+		{
+			TerseHeader header = rd.getHeader();
+			byte[] record;
+			while ((record = rd.nextRecord()) != null)
+			{
+				if (header.RecfmV)
+				{
+					// Reconstruct the RDW: first 2 bytes = total length (data + 4), next 2 = 0x0000
+					int rdw = (record.length + 4) << 16;
+					dataOut.writeInt(rdw);
+				}
+				dataOut.write(record);
+			}
+			dataOut.flush();
+		}
+		assertArrayEquals(file, expected, out.toByteArray());
+	}
+
+	/**
+	 * Decompresses using TerseRecordDecompresser in text mode and reassembles the output
+	 * (appending the platform line separator after each record) to compare against the
+	 * reference text output.
+	 */
+	private void testRecordText(String file, String packSpack) throws Exception
+	{
+		String tersed = location + "/TERSED/" + file + "." + packSpack;
+		String untersed = location + "/ZOSTEXT/" + file;
+
+		byte[] expected = Files.readAllBytes(Paths.get(untersed));
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] lineSep = System.lineSeparator().getBytes();
+
+		try (TerseRecordDecompresser rd = new TerseRecordDecompresser(new FileInputStream(tersed), true))
+		{
+			byte[] record;
+			while ((record = rd.nextRecord()) != null)
+			{
+				out.write(record);
+				out.write(lineSep);
+			}
+		}
+		assertArrayEquals(file, expected, out.toByteArray());
+	}
+
 }
