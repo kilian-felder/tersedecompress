@@ -29,6 +29,12 @@ public class TerseRecordReader implements AutoCloseable {
     /** Sentinel value placed in the queue by the decoder thread when it finishes. */
     private static final byte[] SENTINEL = new byte[0];
 
+    /** Milliseconds to wait for the decoder thread to stop during {@link #close()}. */
+    private static final long DECODER_SHUTDOWN_TIMEOUT_MS = 5000;
+
+    /** Milliseconds to wait in each poll cycle inside {@link #nextRecord()}. */
+    private static final long POLL_TIMEOUT_MS = 10;
+
     private final LinkedBlockingQueue<byte[]> queue;
     private final Thread decoderThread;
     private final InputStream originalStream;
@@ -114,7 +120,7 @@ public class TerseRecordReader implements AutoCloseable {
             byte[] record;
             // Poll with a short timeout so that a close() call (which sets done=true)
             // is detected promptly even if the sentinel was never put into the queue.
-            while ((record = queue.poll(100, TimeUnit.MILLISECONDS)) == null) {
+            while ((record = queue.poll(POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS)) == null) {
                 if (done) {
                     return null;
                 }
@@ -149,7 +155,7 @@ public class TerseRecordReader implements AutoCloseable {
         // woken up by the interrupt without the put call re-blocking on a full queue.
         queue.clear();
         try {
-            decoderThread.join(5000);
+            decoderThread.join(DECODER_SHUTDOWN_TIMEOUT_MS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
