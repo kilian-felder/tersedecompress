@@ -95,6 +95,9 @@ abstract class TerseDecompresser implements AutoCloseable
                 }
             }
         });
+        // Use a daemon thread so the JVM can exit even if the caller forgets to call close().
+        // When close() is called explicitly (e.g. via try-with-resources), it interrupts and
+        // joins this thread to ensure orderly cleanup.
         decompresser.decodeThread.setDaemon(true);
         decompresser.decodeThread.start();
 
@@ -238,13 +241,20 @@ abstract class TerseDecompresser implements AutoCloseable
 	public void close() throws Exception {
 		if (iteratorMode) {
 			if (decodeThread != null) {
+				// Interrupt the thread so it can exit early if blocked on queue.put().
+				// Also close the underlying input stream to unblock any pending I/O read.
+				decodeThread.interrupt();
+				try {
+					this.input.close();
+				} catch (Exception ignored) {
+					// best-effort; we still need to join the thread below
+				}
 				try {
 					decodeThread.join();
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
 			}
-			this.input.close();
 			return;
 		}
 		if (record.size() > 0 
