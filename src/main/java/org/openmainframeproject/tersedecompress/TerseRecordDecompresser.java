@@ -145,6 +145,9 @@ public class TerseRecordDecompresser implements AutoCloseable {
         int b;
         while ((b = pipeIn.read()) != -1) {
             if (b == '\n') {
+                // '\n' is the record delimiter written by TerseDecompresser.endRecord().
+                // On Windows the line separator is "\r\n", so '\r' bytes are skipped below
+                // to produce clean record content on every platform.
                 return buf.toByteArray();
             }
             if (b != '\r') {
@@ -174,6 +177,9 @@ public class TerseRecordDecompresser implements AutoCloseable {
     }
 
     private byte[] readFBRecord() throws IOException {
+        // header.RecordLength is set for host-mode files (versions 0x02/0x05).
+        // For native binary files (versions 0x01/0x07) only RecordLen1 is set;
+        // RecordLength remains 0, so we fall back to RecordLen1.
         int recordLength = header.RecordLength > 0 ? header.RecordLength : header.RecordLen1;
         if (recordLength <= 0) {
             // No record-length information available: return all remaining bytes as one record.
