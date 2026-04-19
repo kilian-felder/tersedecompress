@@ -7,7 +7,7 @@ import java.io.IOException;
  * Data structure used only when checking the header initially
  */
 
-class TerseHeader {
+public class TerseHeader {
 
     public int VersionFlag;
     public int VariableFlag;
@@ -22,9 +22,9 @@ class TerseHeader {
     public boolean RecfmV = false;
     
     /*Defaults for dump types*/
-    boolean TextFlag = true;
-    boolean HostFlag = true;
-    boolean SpackFlag = true;
+    public boolean TextFlag = true;
+    public boolean HostFlag = true;
+    public boolean SpackFlag = true;
 
     public String toString() {
     
@@ -46,7 +46,7 @@ class TerseHeader {
      * associated with it.
      */
 
-    static TerseHeader CheckHeader(DataInputStream datastream) throws IOException 
+    public static TerseHeader CheckHeader(DataInputStream datastream) throws IOException 
     {
         TerseHeader header = new TerseHeader();    
 

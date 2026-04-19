@@ -52,21 +52,32 @@ abstract class TerseDecompresser implements AutoCloseable
     /* Write a new line to the output file*/
     public void endRecord() throws IOException 
     {
+    	byte[] data = record.toByteArray();
+    	record.reset();
+    	deliverRecord(data);
+    }
+
+    /*
+     * Deliver one completed record. The default implementation writes to the output
+     * stream (including RDW for variable-length binary records and a line separator
+     * for text mode). Subclasses may override this to handle the record differently,
+     * e.g. by placing it in a queue for pull-based consumption.
+     */
+    protected void deliverRecord(byte[] data) throws IOException
+    {
     	if (VariableFlag && !TextFlag)
     	{
     		// write a RDW
-    		int recordlength = record.size() + 4;
-    		int rdw = recordlength << 16;
+    		int rdw = (data.length + 4) << 16;
     		stream.writeInt(rdw);
     	}
-    	
-    	stream.write(record.toByteArray());
-    	record.reset();
-    	
+
+    	stream.write(data);
+
     	if (TextFlag)
     	{
     		stream.write(lineseparator);
-    	}    		
+    	}
     }
 
     /*
