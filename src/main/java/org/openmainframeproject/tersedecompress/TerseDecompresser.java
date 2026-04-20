@@ -9,14 +9,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-abstract class TerseDecompresser implements AutoCloseable
+public abstract class TerseDecompresser implements AutoCloseable
 {
 	TerseBlockReader input;
 	ByteArrayOutputStream record;
 	DataOutputStream stream;
 	
 	boolean HostFlag; 
-	boolean TextFlag;
+	public boolean TextFlag;
 	boolean VariableFlag;
 	
     long         OutputTotal   = 0    ; /* total number of bytes                    */
