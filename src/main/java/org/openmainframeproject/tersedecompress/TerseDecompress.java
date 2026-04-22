@@ -49,7 +49,7 @@ class TerseDecompress {
            +"-h or --help prints this message\n"
           );
 
-    private static final String versionString = new String ("Version 5.0.1, commit " + Version.COMMIT_ID_ABBREV);
+    private static final String versionString = new String ("Version 5.0.1.1, commit " + Version.COMMIT_ID_ABBREV);
     private String inputFileName = null;
     private String outputFileName = null;
     private boolean isHelpRequested = false;

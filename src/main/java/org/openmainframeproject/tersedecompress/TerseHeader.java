@@ -7,7 +7,7 @@ import java.io.IOException;
  * Data structure used only when checking the header initially
  */
 
-class TerseHeader {
+public class TerseHeader {
 
     public int VersionFlag;
     public int VariableFlag;
@@ -46,7 +46,7 @@ class TerseHeader {
      * associated with it.
      */
 
-    static TerseHeader CheckHeader(DataInputStream datastream) throws IOException 
+    public static TerseHeader CheckHeader(DataInputStream datastream) throws IOException 
     {
         TerseHeader header = new TerseHeader();    
 
